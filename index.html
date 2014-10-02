@@ -1,0 +1,93 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> <!-- Forces IE out of comp mode -->
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<title>Internet of Things</title>
+        <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/yeti/bootstrap.min.css" rel="stylesheet">
+		<style>
+		</style>
+	</head>
+	<body>
+
+		<div class="container-fluid">
+
+			<h1>Internet of Things</h1>
+			<button id="startBtn">Start</button>
+			<button id="stopBtn">Stop</button>
+			<div id="observations"></div>
+
+		</div>
+
+		<script id="template" type="text/x-dot-template">
+			{{~it.observations :o:index}}
+				<h3>{{=o.observation.RadioSensorId}}</h3>
+			{{~}}
+		</script> 
+
+		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
+		<script src="js/doT.min.js"></script>
+		<script>
+
+		var IOT_URL = '../observe/observedsensor';
+		var IOT_INTERVAL = 2000; // milliseconds
+
+		var IOT = (function($, doT){
+
+		 	var ajaxConfig = {
+				type: 'get',
+				url: IOT_URL,
+				data: {
+			 		query: '*'
+			 	},
+				cache: false
+			};
+
+
+			var ajaxId;
+			var intervalId;
+
+			function callServer(){
+				ajaxId = $.ajax(ajaxConfig).done(function( data ) {
+					parseResults( data );
+				});
+			}
+
+			function parseResults(data){
+				var html = renderer(data);
+				console.log(data);
+				$('#observations').html(html);
+			}
+
+			function init() {
+				renderer = doT.template( $('#template').text() );
+				startObserving();
+				$('#startBtn').click(startObserving);
+				$('#stopBtn').click(stopObserving);
+			}
+
+			function startObserving() {
+				console.log('Starting observations with interval ', IOT_INTERVAL);
+				callServer();
+				intervalId = window.setInterval(callServer, IOT_INTERVAL);
+			}
+
+			function stopObserving() {
+				console.log('Stopping observations');
+				ajaxId.abort();
+				window.clearInterval(intervalId);
+			}
+
+			return {
+				init: init
+			}
+
+		}($, doT));
+
+		IOT.init();
+
+		</script>		
+	</body>
+</html>
